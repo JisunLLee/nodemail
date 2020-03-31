@@ -1,2 +1,5 @@
 # Project exclude paths
 /node_modules/
+mailInfo.json
+package-lock.json
+.idea
