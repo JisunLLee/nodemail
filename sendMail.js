@@ -1,5 +1,5 @@
-const nodeMail = require("nodemailer");
 const Path = process.cwd();
+const nodeMail = require("nodemailer");
 const emailInfo = require(Path + '/mailInfo.json');
 const transporter = nodeMail.createTransport({
   service: "Gmail",
@@ -8,53 +8,69 @@ const transporter = nodeMail.createTransport({
     pass: emailInfo.pass
   }
 });
-console.log('emailInfo.user : ',emailInfo.default.user);
-// var mailOptions = {
-//   from: req.body.email,
-//   to: myEmail,
-//   subject: req.body.name + "님의 문의 메일",
-//   text: "문의 메일이 왔습니다. 이름: " + req.body.name + ", 메시지 내용: " + req.body.message
-// };
 
-// var mailOptions = {
-//   from: "hello@undefined.gg",
-//   to: "lucia@undefined.gg",
-//   subject: "req.body.name" + "안녕안",
-//   html: `<h3>[DuelNET] 임시 비밀번호는 []입니다. </h3><br>
-// 							<h4> 사용 후 변경해 주세요. </h4>`
-// };
+async function sendSampleMail() {
+  try {
+    mailOptions = {
+      from: 'Sender mailAddress',
+      to: 'Receiver mailAddress',
+      subject: "Mail Subject. Title of mail",
+      text: "body of mail. it just Text. if you want send Html form, you just change the key 'text' to 'html' "
+    };
+    const send_mail = await sendEmailWithNodeMailer(mailOptions);
+    if (!send_mail)
+      throw {status: 400, errorCode: "ErrorCode", category: 'email/sendRefuse', message: "Can Not Send Email"};
+    console.log({message: [200, {data: ""}, 'Success']});
+    // res.send({message: [200, {data: ""}, 'Success']});
+  } catch (e) {
+    console.error(e)
+    // res.send(e)
+  }
+}
 
 
-function mailOptions(email, type, value){
-  let subject;
-  let html;
-  let from = "hello.duelnet@gmail.com";
-  let	to = email;
+async function sendCustomEmail(type, value, email) {
+  try {
+    const mailOptions = mailOptions(email, type, value);
+    const send_mail = await sendEmailWithNodeMailer(mailOptions);
+    if (!send_mail)
+      throw {status: 400, errorCode: "ErrorCode", category: 'email/sendRefuse', message: "Can Not Send Email"};
+    console.log({message: [200, {data: ""}, 'Success']});
+    // res.send({message: [200, {data: ""}, 'Success']});
+  } catch (e) {
+    console.error(e)
+    // res.send(e)
+  }
+}
+
+function mailOptions(type, value, email){
   switch (type) {
-    case "tempPwd" :
-      subject = `[DuelNET] 임시 비밀번호 : ${value}`;
-      html = `<h3>[DuelNET] 임시 비밀번호는 [${value}]입니다. </h3><br>
-							<h4> 사용 후 변경해 주세요. </h4>`;
-      break;
-    case  "emailValidateNum" :
-      subject = `[DuelNET] 이메일 인증 번호 : ${value}`;
-      html = `<h3>[DuelNET] 이메일 인증 번호는 [${value}]입니다.</h3><br>`;
-      break;
+    case "sendHtml" :
+      addressOption.fromMe["to"] = email;
+      addressOption.fromMe["subject"] = value.subject;
+      addressOption.fromMe["html"] = value.body;
+      return addressOption.fromMe;
+
+    case  "sendText" :
+      addressOption.fromMe["to"] = email;
+      addressOption.fromMe["subject"] = value.subject;
+      addressOption.fromMe["text"] = value.body;
+      return addressOption.fromMe;
+
     case  "userInquiry" :
-      subject = `${email} 문의 메일`;
-      html = value;
-      to = 'hello@undefined.gg';
+      addressOption.fromMeToMe["subject"] = value.subject;
+      addressOption.fromMeToMe["html"] = value.body;
       break;
   }
-  const mailOptions = {
-    from: from,
-    to: to,
-    subject: subject,
-    html: html
-  };
-
-  return mailOptions;
 }
+
+const addressOption = {
+  fromMe : {from: emailInfo.user},
+  toMe: {to: emailInfo.user},
+  fromMeToMe : {from: emailInfo.user, to: emailInfo.user}
+};
+
+
 
 async function sendEmailWithNodeMailer(mailOptions) {
   return new Promise((resolve, reject) => {
@@ -70,14 +86,3 @@ async function sendEmailWithNodeMailer(mailOptions) {
   })
 }
 
-
-
-// transporter.sendMail(mailOptions, function (err) {
-//   if (err) {
-//     console.log(err);
-//     // res.status(400).send({ msg: "전송 실패" });
-//   } else {
-//     console.log("Message send");
-//     // res.status(200).send({ msg: "전송 완료" });
-//   }
-// });
